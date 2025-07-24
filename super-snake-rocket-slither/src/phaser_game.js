@@ -23,6 +23,13 @@ export function startGame(element) {
         width: 800,
         height: 600,
         parent: element,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        },
         scene: {
             preload: preload,
             create: create,
@@ -42,14 +49,21 @@ export function startGame(element) {
 
         // create and store sprite references
         snake.forEach(part => {
-            const sprite = this.add.sprite(part.x, part.y, 'star').setScale(0.5);
+            const sprite = this.physics.add.sprite(part.x, part.y, 'star').setScale(0.5);
             snakeSprites.push(sprite);
         });
 
-        // this.physics.add.overlap(snakeSprites[0], food, collectFood, null, this)
+        // create food
+        food = this.physics.add.sprite(Phaser.Math.Between(0, 79) * 10, Phaser.Math.Between(0, 59) * 10, 'star').setScale(0.5);
+        food.setInteractive();        
+        this.physics.add.overlap(snakeSprites[0], food, collectFood, null, this)
+
     }
 
     function collectFood(){
+        console.log("Food collected");
+        food.x = Phaser.Math.Between(0, 79) * 10;
+        food.y = Phaser.Math.Between(0, 59) * 10;
         foodCollected = true;
     }
 
@@ -87,9 +101,8 @@ export function startGame(element) {
             } else if (cursors.down.isDown && direction !== 'UP') {
                 direction = 'DOWN';
             }
-
             
-            if (cursors.space.isDown){
+            if (foodCollected){
                 let newPart = {x : snake[0].x, y : snake[0].y}
                 snake.splice(1, 0, newPart)
                 let newSprite = scene.add.sprite(snake[0].x, snake[0].y, 'star').setScale(0.5);
@@ -100,6 +113,7 @@ export function startGame(element) {
                     snakeSprites[i].x = snake[i].x;
                     snakeSprites[i].y = snake[i].y;
                 }
+                foodCollected = false;
             }
             else{
                 for (let i = snake.length - 1; i > 0; i--) {
