@@ -87,7 +87,8 @@ export function startGame(element) {
 
     function update(time) {
         if (gameOver) {
-            console.log("Game Over")
+            // Display game over message
+            scene.add.text(300, 250, 'Game Over', { fontSize: '32px', fill: '#fff' });
             scene.scene.pause();
             return;
         }
