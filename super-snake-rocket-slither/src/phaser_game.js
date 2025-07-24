@@ -1,14 +1,7 @@
 import Phaser from 'phaser';
 
 export function startGame(element) {
-    let snake = [
-        { x: 40, y: 0 },
-        { x: 30, y: 0 },
-        { x: 20, y: 0 },
-        { x: 10, y: 0 },
-        { x: 0, y: 0 }
-    ];
-    let snakeSprites = [];
+    let snake;
     let cursors;
     let direction = 'RIGHT';
     let moveTimer = 0;
@@ -48,16 +41,23 @@ export function startGame(element) {
         this.add.image(400, 300, 'sky');
         cursors = this.input.keyboard.createCursorKeys();
 
-        // create and store sprite references
-        snake.forEach(part => {
-            const sprite = this.physics.add.sprite(part.x, part.y, 'square').setScale(0.5);
-            snakeSprites.push(sprite);
+        snake = this.physics.add.group({
+            key: 'square',
+            repeat: 4,
+            setXY: { x: 100, y: 100, stepX: -10 }
         });
+        snake.children.iterate(function (part) {
+            part.setScale(0.5);
+        });
+        
 
         // create food
         food = this.physics.add.sprite(Phaser.Math.Between(0, 79) * 10, Phaser.Math.Between(0, 59) * 10, 'star').setScale(0.5);
         food.setInteractive();        
-        this.physics.add.overlap(snakeSprites[0], food, collectFood, null, this)
+        this.physics.add.overlap(snake, food, collectFood, null, this)
+        this.physics.add.collider(snake, snake, function() {
+            gameOver = true;
+        });
 
     }
 
@@ -86,13 +86,17 @@ export function startGame(element) {
     }
 
     function update(time) {
-        if (gameOver) return;
+        if (gameOver) {
+            console.log("Game Over")
+            scene.scene.pause();
+            return;
+        }
 
-        // move the snake at a fixed interval
         if (time - moveTimer > moveDelay) {
             moveTimer = time;
 
-            // handle direction change (prevents reversing)
+            const children = snake.getChildren();
+
             if (cursors.left.isDown && direction !== 'RIGHT') {
                 direction = 'LEFT';
             } else if (cursors.right.isDown && direction !== 'LEFT') {
@@ -102,43 +106,41 @@ export function startGame(element) {
             } else if (cursors.down.isDown && direction !== 'UP') {
                 direction = 'DOWN';
             }
-            
-            if (foodCollected){
-                let newPart = {x : snake[0].x, y : snake[0].y}
-                snake.splice(1, 0, newPart)
-                let newSprite = scene.add.sprite(snake[0].x, snake[0].y, 'square').setScale(0.5);
-                snakeSprites.splice(1, 0, newSprite);
-                [snake[0].x, snake[0].y] = calculateNextPosition(direction, snake[0].x, snake[0].y)
-                console.log("running")
-                for (let i = 0; i < snake.length; i++) {
-                    snakeSprites[i].x = snake[i].x;
-                    snakeSprites[i].y = snake[i].y;
-                }
+
+            // handle movement and growth
+            let head = children[0];
+
+            let [nextX, nextY] = calculateNextPosition(direction, head.x, head.y);
+
+            if (foodCollected) {
+                // Add new part at current tail position
+                const tail = children[children.length - 1];
+                const newPart = scene.add.sprite(tail.x, tail.y, 'square').setScale(0.5);
+                scene.physics.add.existing(newPart);
+                snake.add(newPart);
                 foodCollected = false;
             }
-            else{
-                for (let i = snake.length - 1; i > 0; i--) {
-                    snake[i].x = snake[i - 1].x;
-                    snake[i].y = snake[i - 1].y;
-                }
-                [snake[0].x, snake[0].y] = calculateNextPosition(direction, snake[0].x, snake[0].y)
-                for (let i = 0; i < snake.length; i++) {
-                    snakeSprites[i].x = snake[i].x;
-                    snakeSprites[i].y = snake[i].y;
-                }
-            }
-            // move the body
 
-            // game over if out of bounds
+            // Shift positions
+            for (let i = children.length - 1; i > 0; i--) {
+                children[i].x = children[i - 1].x;
+                children[i].y = children[i - 1].y;
+            }
+
+            head.x = nextX;
+            head.y = nextY;
+
+            // check for out of bounds
             if (
-                snake[0].x < 0 || snake[0].x >= config.width ||
-                snake[0].y < 0 || snake[0].y >= config.height
+                head.x < 0 || head.x >= config.width ||
+                head.y < 0 || head.y >= config.height
             ) {
                 gameOver = true;
                 console.log('Game Over');
             }
         }
     }
+
 
     new Phaser.Game(config);
 }
