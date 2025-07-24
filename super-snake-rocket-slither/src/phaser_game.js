@@ -10,6 +10,7 @@ export function startGame(element) {
     let food;
     let foodCollected = false;
     let scene;
+    let obstacles;
 
     const config = {
         type: Phaser.AUTO,
@@ -34,6 +35,7 @@ export function startGame(element) {
         this.load.image('sky', 'assets/sky.png');
         this.load.image('star', 'assets/star.png');
         this.load.image('square', 'assets/square.png');
+        this.load.image('obstacle', 'assets/platform.png'); // Assuming square is used for obstacles
     }
 
     function create() {
@@ -48,17 +50,30 @@ export function startGame(element) {
         });
         snake.children.iterate(function (part) {
             part.setScale(0.5);
+            part.setOrigin(0.5, 0.5);
         });
         
 
         // create food
         food = this.physics.add.sprite(Phaser.Math.Between(0, 79) * 10, Phaser.Math.Between(0, 59) * 10, 'star').setScale(0.5);
         food.setInteractive();        
+
+        // add food overlap
         this.physics.add.overlap(snake, food, collectFood, null, this)
+
+        // add snake collision with self
         this.physics.add.collider(snake, snake, function() {
             gameOver = true;
         });
 
+        // add obstacles
+        obstacles = this.physics.add.staticGroup();
+        obstacles.create(200, 200, 'obstacle');
+
+        // add snake collision with obstacles
+        this.physics.add.collider(snake, obstacles, function() {
+            gameOver = true;
+        });
     }
 
     function collectFood(){
@@ -131,12 +146,25 @@ export function startGame(element) {
             head.y = nextY;
 
             // check for out of bounds
-            if (
-                head.x < 0 || head.x >= config.width ||
-                head.y < 0 || head.y >= config.height
-            ) {
-                gameOver = true;
-                console.log('Game Over');
+            // if (
+            //     head.x < 0 || head.x >= config.width ||
+            //     head.y < 0 || head.y >= config.height
+            // ) {
+            //     gameOver = true;
+            //     console.log('Game Over');
+            // }
+
+            if (head.x < 0){
+                head.x = config.width - 10;
+            }
+            if (head.x >= config.width){
+                head.x = 0;
+            }
+            if (head.y < 0){
+                head.y = config.height - 10;
+            }
+            if (head.y >= config.height){
+                head.y = 0;
             }
         }
     }
