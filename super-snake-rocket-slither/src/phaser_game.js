@@ -40,6 +40,7 @@ export function startGame(element) {
     function preload() {
         this.load.image('sky', 'assets/sky.png');
         this.load.image('star', 'assets/star.png');
+        this.load.image('square', 'assets/square.png');
     }
 
     function create() {
@@ -49,7 +50,7 @@ export function startGame(element) {
 
         // create and store sprite references
         snake.forEach(part => {
-            const sprite = this.physics.add.sprite(part.x, part.y, 'star').setScale(0.5);
+            const sprite = this.physics.add.sprite(part.x, part.y, 'square').setScale(0.5);
             snakeSprites.push(sprite);
         });
 
@@ -105,7 +106,7 @@ export function startGame(element) {
             if (foodCollected){
                 let newPart = {x : snake[0].x, y : snake[0].y}
                 snake.splice(1, 0, newPart)
-                let newSprite = scene.add.sprite(snake[0].x, snake[0].y, 'star').setScale(0.5);
+                let newSprite = scene.add.sprite(snake[0].x, snake[0].y, 'square').setScale(0.5);
                 snakeSprites.splice(1, 0, newSprite);
                 [snake[0].x, snake[0].y] = calculateNextPosition(direction, snake[0].x, snake[0].y)
                 console.log("running")
