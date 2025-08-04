@@ -5,12 +5,16 @@ export function startGame(element) {
     let cursors;
     let direction = 'RIGHT';
     let moveTimer = 0;
-    let moveDelay = 100;
+    let moveDelay;
     let gameOver = false;
     let food;
     let foodCollected = false;
     let scene;
     let obstacles;
+    let spacebar;
+    let score = 0;
+    let scoreText;
+
 
     const config = {
         type: Phaser.AUTO,
@@ -42,16 +46,19 @@ export function startGame(element) {
         scene = this;
         this.add.image(400, 300, 'sky');
         cursors = this.input.keyboard.createCursorKeys();
+        spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         snake = this.physics.add.group({
             key: 'square',
             repeat: 4,
             setXY: { x: 100, y: 100, stepX: -10 }
-        });
+        }); 
         snake.children.iterate(function (part) {
             part.setScale(0.5);
             part.setOrigin(0.5, 0.5);
         });
+
+        scoreText = scene.add.text(10, 10, 'Score: ' + score, { fontSize: '16px', fill: '#fff' });
         
 
         // create food
@@ -69,6 +76,7 @@ export function startGame(element) {
         // add obstacles
         obstacles = this.physics.add.staticGroup();
         obstacles.create(200, 200, 'obstacle');
+        obstacles.create(400, 300, 'obstacle');
 
         // add snake collision with obstacles
         this.physics.add.collider(snake, obstacles, function() {
@@ -81,6 +89,8 @@ export function startGame(element) {
         food.x = Phaser.Math.Between(0, 79) * 10;
         food.y = Phaser.Math.Between(0, 59) * 10;
         foodCollected = true;
+        score += 10;
+        scoreText.setText("Score: " + score);
     }
 
     function calculateNextPosition(dir, snake_x, snake_y){
@@ -101,12 +111,21 @@ export function startGame(element) {
     }
 
     function update(time) {
+        
         if (gameOver) {
             // Display game over message
             scene.add.text(300, 250, 'Game Over', { fontSize: '32px', fill: '#fff' });
             scene.scene.pause();
             return;
         }
+
+        if (spacebar.isDown){
+            moveDelay = 10;
+        }
+        else{
+            moveDelay = 50;
+        }
+
 
         if (time - moveTimer > moveDelay) {
             moveTimer = time;
